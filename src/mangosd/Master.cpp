@@ -1,5 +1,8 @@
 /**
- * This code is part of MaNGOS. Contributor & Copyright details are in AUTHORS/THANKS.
+ * MaNGOS is a full featured server for World of Warcraft, supporting
+ * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
+ *
+ * Copyright (C) 2005-2015  MaNGOS project <http://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * World of Warcraft, and all World of Warcraft or Warcraft art, images,
+ * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
 /** \file
@@ -68,7 +74,7 @@ class FreezeDetectorRunnable : public ACE_Based::Runnable
         void run(void)
         {
             if (!_delaytime)
-                return;
+                { return; }
             sLog.outString("Starting up anti-freeze thread (%u seconds max stuck time)...", _delaytime / 1000);
             m_loops = 0;
             w_loops = 0;
@@ -145,14 +151,14 @@ class RARunnable : public ACE_Based::Runnable
                 sLog.outError("MaNGOS RA can not bind to port %d on %s", raport, stringip.c_str());
             }
 
-            sLog.outString("Starting Remote access listner on port %d on %s", raport, stringip.c_str());
+            sLog.outString("Starting Remote access listener on port %d on %s", raport, stringip.c_str());
 
             while (!m_Reactor->reactor_event_loop_done())
             {
                 ACE_Time_Value interval(0, 10000);
 
                 if (m_Reactor->run_reactor_event_loop(interval) == -1)
-                    break;
+                    { break; }
 
                 if (World::IsStopped())
                 {
@@ -182,7 +188,7 @@ int Master::Run()
         uint32 pid = CreatePIDFile(pidfile);
         if (!pid)
         {
-            sLog.outError("Cannot create PID file %s.\n", pidfile.c_str());
+            sLog.outError("Can not create PID file %s.\n", pidfile.c_str());
             Log::WaitBeforeContinueIfNeed();
             return 1;
         }
@@ -196,6 +202,9 @@ int Master::Run()
         Log::WaitBeforeContinueIfNeed();
         return 1;
     }
+
+    ///- Set Realm to Offline, if crash happens. Only used once.
+    LoginDatabase.DirectPExecute("UPDATE realmlist SET realmflags = realmflags | %u WHERE id = '%u'", REALM_FLAG_OFFLINE, realmID);
 
     ///- Initialize the World
     sWorld.SetInitialWorldSettings();
@@ -263,9 +272,9 @@ int Master::Run()
                 else
                 {
                     if (SetProcessAffinityMask(hProcess, curAff))
-                        sLog.outString("Using processors (bitmask, hex): %x", curAff);
+                        { sLog.outString("Using processors (bitmask, hex): %x", curAff); }
                     else
-                        sLog.outError("Can't set used processors (hex): %x", curAff);
+                        { sLog.outError("Can't set used processors (hex): %x", curAff); }
                 }
             }
             sLog.outString();
@@ -277,9 +286,9 @@ int Master::Run()
         if (Prio)
         {
             if (SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS))
-                sLog.outString("mangosd process priority class set to HIGH");
+                { sLog.outString("mangosd process priority class set to HIGH"); }
             else
-                sLog.outError("Can't set mangosd process priority class.");
+                { sLog.outError("Can't set mangosd process priority class."); }
             sLog.outString();
         }
     }
@@ -435,7 +444,7 @@ bool Master::_StartDB()
     ///- Initialise the world database
     if (!WorldDatabase.Initialize(dbstring.c_str(), nConnections))
     {
-        sLog.outError("Cannot connect to world database %s", dbstring.c_str());
+        sLog.outError("Can not connect to world database %s", dbstring.c_str());
         return false;
     }
 
@@ -461,7 +470,7 @@ bool Master::_StartDB()
     ///- Initialise the Character database
     if (!CharacterDatabase.Initialize(dbstring.c_str(), nConnections))
     {
-        sLog.outError("Cannot connect to Character database %s", dbstring.c_str());
+        sLog.outError("Can not connect to Character database %s", dbstring.c_str());
 
         ///- Wait for already started DB delay threads to end
         WorldDatabase.HaltDelayThread();
@@ -493,7 +502,7 @@ bool Master::_StartDB()
     sLog.outString("Login Database total connections: %i", nConnections + 1);
     if (!LoginDatabase.Initialize(dbstring.c_str(), nConnections))
     {
-        sLog.outError("Cannot connect to login database %s", dbstring.c_str());
+        sLog.outError("Can not connect to login database %s", dbstring.c_str());
 
         ///- Wait for already started DB delay threads to end
         WorldDatabase.HaltDelayThread();
@@ -510,6 +519,8 @@ bool Master::_StartDB()
         return false;
     }
 
+    sLog.outString();
+
     ///- Get the realm Id from the configuration file
     realmID = sConfig.GetIntDefault("RealmID", 0);
     if (!realmID)
@@ -524,6 +535,7 @@ bool Master::_StartDB()
     }
 
     sLog.outString("Realm running as realm ID %d", realmID);
+    sLog.outString();
 
     ///- Clean the database before starting
     clearOnlineAccounts();
@@ -532,6 +544,7 @@ bool Master::_StartDB()
 
     sLog.outString("Using World DB: %s", sWorld.GetDBVersion());
     sLog.outString("Using creature EventAI: %s", sWorld.GetCreatureEventAIVersion());
+    sLog.outString();
     return true;
 }
 
@@ -540,7 +553,7 @@ void Master::clearOnlineAccounts()
 {
     // Cleanup online status for characters hosted at current realm
     /// \todo Only accounts with characters logged on *this* realm should have online status reset. Move the online column from 'account' to 'realmcharacters'?
-    LoginDatabase.PExecute("UPDATE account SET active_realm_id = 0 WHERE active_realm_id = '%u'", realmID);
+    LoginDatabase.PExecute("UPDATE account SET active_realm_id = 0, os = ''  WHERE active_realm_id = '%u'", realmID);
 
     CharacterDatabase.Execute("UPDATE characters SET online = 0 WHERE online<>0");
 

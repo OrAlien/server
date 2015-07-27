@@ -1,5 +1,8 @@
 /**
- * This code is part of MaNGOS. Contributor & Copyright details are in AUTHORS/THANKS.
+ * MaNGOS is a full featured server for World of Warcraft, supporting
+ * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
+ *
+ * Copyright (C) 2005-2015  MaNGOS project <http://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * World of Warcraft, and all World of Warcraft or Warcraft art, images,
+ * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
 #include "Util.h"
@@ -116,7 +122,7 @@ Tokens StrSplit(const std::string& src, const std::string& sep)
     {
         if (sep.find(*i) != std::string::npos)
         {
-            if (s.length()) r.push_back(s);
+            if (s.length()) { r.push_back(s); }
             s = "";
         }
         else
@@ -124,14 +130,14 @@ Tokens StrSplit(const std::string& src, const std::string& sep)
             s += *i;
         }
     }
-    if (s.length()) r.push_back(s);
+    if (s.length()) { r.push_back(s); }
     return r;
 }
 
 uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index)
 {
     if (index >= data.size())
-        return 0;
+        { return 0; }
 
     return (uint32)atoi(data[index].c_str());
 }
@@ -180,15 +186,15 @@ void stripLineInvisibleChars(std::string& str)
         else
         {
             if (wpos != pos)
-                str[wpos++] = str[pos];
+                { str[wpos++] = str[pos]; }
             else
-                ++wpos;
+                { ++wpos; }
             space = false;
         }
     }
 
     if (wpos < str.size())
-        str.erase(wpos, str.size());
+        { str.erase(wpos, str.size()); }
 }
 
 std::string secsToTimeString(time_t timeInSecs, bool shortText, bool hoursOnly)
@@ -200,15 +206,15 @@ std::string secsToTimeString(time_t timeInSecs, bool shortText, bool hoursOnly)
 
     std::ostringstream ss;
     if (days)
-        ss << days << (shortText ? "d" : " Day(s) ");
+        { ss << days << (shortText ? "d" : " Day(s) "); }
     if (hours || hoursOnly)
-        ss << hours << (shortText ? "h" : " Hour(s) ");
+        { ss << hours << (shortText ? "h" : " Hour(s) "); }
     if (!hoursOnly)
     {
         if (minutes)
-            ss << minutes << (shortText ? "m" : " Minute(s) ");
+            { ss << minutes << (shortText ? "m" : " Minute(s) "); }
         if (secs || (!days && !hours && !minutes))
-            ss << secs << (shortText ? "s" : " Second(s).");
+            { ss << secs << (shortText ? "s" : " Second(s)."); }
     }
 
     return ss.str();
@@ -260,6 +266,18 @@ std::string TimeToTimestampStr(time_t t)
     return std::string(buf);
 }
 
+/// Check if the string is a valid ip address representation
+bool IsIPAddress(char const* ipaddress)
+{
+    if (!ipaddress)
+        { return false; }
+
+    // Let the big boys do it.
+    // Drawback: all valid ip address formats are recognized e.g.: 12.23,121234,0xABCD)
+    return ACE_OS::inet_addr(ipaddress) != INADDR_NONE;
+}
+
+
 time_t timeBitFieldsToSecs(uint32 packedDate)
 {
     tm lt;
@@ -290,15 +308,19 @@ std::string MoneyToString(uint64 money)
     return ss.str();
 }
 
-/// Check if the string is a valid ip address representation
-bool IsIPAddress(char const* ipaddress)
+std::string GetAddressString(ACE_INET_Addr const& addr)
 {
-    if (!ipaddress)
-        return false;
+    char buf[ACE_MAX_FULLY_QUALIFIED_NAME_LEN + 16];
+    addr.addr_to_string(buf, ACE_MAX_FULLY_QUALIFIED_NAME_LEN + 16);
+    return buf;
+}
 
-    // Let the big boys do it.
-    // Drawback: all valid ip address formats are recognized e.g.: 12.23,121234,0xABCD)
-    return ACE_OS::inet_addr(ipaddress) != INADDR_NONE;
+bool IsIPAddrInNetwork(ACE_INET_Addr const& net, ACE_INET_Addr const& addr, ACE_INET_Addr const& subnetMask)
+{
+    uint32 mask = subnetMask.get_ip_address();
+    if ((net.get_ip_address() & mask) == (addr.get_ip_address() & mask))
+        return true;
+    return false;
 }
 
 /// create PID file
@@ -306,7 +328,7 @@ uint32 CreatePIDFile(const std::string& filename)
 {
     FILE* pid_file = fopen(filename.c_str(), "w");
     if (pid_file == NULL)
-        return 0;
+        { return 0; }
 
 #ifdef WIN32
     DWORD pid = GetCurrentProcessId();
@@ -339,7 +361,7 @@ void utf8truncate(std::string& utf8str, size_t len)
     {
         size_t wlen = utf8::distance(utf8str.c_str(), utf8str.c_str() + utf8str.size());
         if (wlen <= len)
-            return;
+            { return; }
 
         std::wstring wstr;
         wstr.resize(wlen);
@@ -362,7 +384,7 @@ bool Utf8toWStr(char const* utf8str, size_t csize, wchar_t* wstr, size_t& wsize)
         if (len > wsize)
         {
             if (wsize > 0)
-                wstr[0] = L'\0';
+                { wstr[0] = L'\0'; }
             wsize = 0;
             return false;
         }
@@ -374,7 +396,7 @@ bool Utf8toWStr(char const* utf8str, size_t csize, wchar_t* wstr, size_t& wsize)
     catch (std::exception)
     {
         if (wsize > 0)
-            wstr[0] = L'\0';
+            { wstr[0] = L'\0'; }
         wsize = 0;
         return false;
     }
@@ -390,7 +412,7 @@ bool Utf8toWStr(const std::string& utf8str, std::wstring& wstr)
         wstr.resize(len);
 
         if (len)
-            utf8::utf8to16(utf8str.c_str(), utf8str.c_str() + utf8str.size(), &wstr[0]);
+            { utf8::utf8to16(utf8str.c_str(), utf8str.c_str() + utf8str.size(), &wstr[0]); }
     }
     catch (std::exception)
     {
@@ -451,22 +473,22 @@ std::wstring GetMainPartOfName(std::wstring wname, uint32 declension)
 
     // Important: end length must be <= MAX_INTERNAL_PLAYER_NAME-MAX_PLAYER_NAME (3 currently)
 
-    static wchar_t const a_End[]    = { wchar_t(1), wchar_t(0x0430), wchar_t(0x0000)};
-    static wchar_t const o_End[]    = { wchar_t(1), wchar_t(0x043E), wchar_t(0x0000)};
-    static wchar_t const ya_End[]   = { wchar_t(1), wchar_t(0x044F), wchar_t(0x0000)};
-    static wchar_t const ie_End[]   = { wchar_t(1), wchar_t(0x0435), wchar_t(0x0000)};
-    static wchar_t const i_End[]    = { wchar_t(1), wchar_t(0x0438), wchar_t(0x0000)};
-    static wchar_t const yeru_End[] = { wchar_t(1), wchar_t(0x044B), wchar_t(0x0000)};
-    static wchar_t const u_End[]    = { wchar_t(1), wchar_t(0x0443), wchar_t(0x0000)};
-    static wchar_t const yu_End[]   = { wchar_t(1), wchar_t(0x044E), wchar_t(0x0000)};
-    static wchar_t const oj_End[]   = { wchar_t(2), wchar_t(0x043E), wchar_t(0x0439), wchar_t(0x0000)};
-    static wchar_t const ie_j_End[] = { wchar_t(2), wchar_t(0x0435), wchar_t(0x0439), wchar_t(0x0000)};
-    static wchar_t const io_j_End[] = { wchar_t(2), wchar_t(0x0451), wchar_t(0x0439), wchar_t(0x0000)};
-    static wchar_t const o_m_End[]  = { wchar_t(2), wchar_t(0x043E), wchar_t(0x043C), wchar_t(0x0000)};
-    static wchar_t const io_m_End[] = { wchar_t(2), wchar_t(0x0451), wchar_t(0x043C), wchar_t(0x0000)};
-    static wchar_t const ie_m_End[] = { wchar_t(2), wchar_t(0x0435), wchar_t(0x043C), wchar_t(0x0000)};
-    static wchar_t const soft_End[] = { wchar_t(1), wchar_t(0x044C), wchar_t(0x0000)};
-    static wchar_t const j_End[]    = { wchar_t(1), wchar_t(0x0439), wchar_t(0x0000)};
+    static wchar_t const a_End[] = { wchar_t(1), wchar_t(0x0430), wchar_t(0x0000) };
+    static wchar_t const o_End[] = { wchar_t(1), wchar_t(0x043E), wchar_t(0x0000) };
+    static wchar_t const ya_End[] = { wchar_t(1), wchar_t(0x044F), wchar_t(0x0000) };
+    static wchar_t const ie_End[] = { wchar_t(1), wchar_t(0x0435), wchar_t(0x0000) };
+    static wchar_t const i_End[] = { wchar_t(1), wchar_t(0x0438), wchar_t(0x0000) };
+    static wchar_t const yeru_End[] = { wchar_t(1), wchar_t(0x044B), wchar_t(0x0000) };
+    static wchar_t const u_End[] = { wchar_t(1), wchar_t(0x0443), wchar_t(0x0000) };
+    static wchar_t const yu_End[] = { wchar_t(1), wchar_t(0x044E), wchar_t(0x0000) };
+    static wchar_t const oj_End[] = { wchar_t(2), wchar_t(0x043E), wchar_t(0x0439), wchar_t(0x0000) };
+    static wchar_t const ie_j_End[] = { wchar_t(2), wchar_t(0x0435), wchar_t(0x0439), wchar_t(0x0000) };
+    static wchar_t const io_j_End[] = { wchar_t(2), wchar_t(0x0451), wchar_t(0x0439), wchar_t(0x0000) };
+    static wchar_t const o_m_End[] = { wchar_t(2), wchar_t(0x043E), wchar_t(0x043C), wchar_t(0x0000) };
+    static wchar_t const io_m_End[] = { wchar_t(2), wchar_t(0x0451), wchar_t(0x043C), wchar_t(0x0000) };
+    static wchar_t const ie_m_End[] = { wchar_t(2), wchar_t(0x0435), wchar_t(0x043C), wchar_t(0x0000) };
+    static wchar_t const soft_End[] = { wchar_t(1), wchar_t(0x044C), wchar_t(0x0000) };
+    static wchar_t const j_End[] = { wchar_t(1), wchar_t(0x0439), wchar_t(0x0000) };
 
     static wchar_t const* const dropEnds[6][8] =
     {
@@ -494,7 +516,7 @@ bool utf8ToConsole(const std::string& utf8str, std::string& conStr)
 #if PLATFORM == PLATFORM_WINDOWS
     std::wstring wstr;
     if (!Utf8toWStr(utf8str, wstr))
-        return false;
+        { return false; }
 
     conStr.resize(wstr.size());
     CharToOemBuffW(&wstr[0], &conStr[0], wstr.size());
@@ -526,13 +548,13 @@ bool Utf8FitTo(const std::string& str, std::wstring search)
     std::wstring temp;
 
     if (!Utf8toWStr(str, temp))
-        return false;
+        { return false; }
 
     // converting to lower case
     wstrToLower(temp);
 
     if (temp.find(search) == std::wstring::npos)
-        return false;
+        { return false; }
 
     return true;
 }
@@ -573,11 +595,60 @@ void hexEncodeByteArray(uint8* bytes, uint32 arrayLen, std::string& result)
             unsigned char nibble = 0x0F & (bytes[i] >> ((1 - j) * 4));
             char encodedNibble;
             if (nibble < 0x0A)
-                encodedNibble = '0' + nibble;
+                { encodedNibble = '0' + nibble; }
             else
-                encodedNibble = 'A' + nibble - 0x0A;
+                { encodedNibble = 'A' + nibble - 0x0A; }
             ss << encodedNibble;
         }
     }
     result = ss.str();
+}
+
+std::string ByteArrayToHexStr(uint8 const* bytes, uint32 arrayLen, bool reverse /* = false */)
+{
+    int32 init = 0;
+    int32 end = arrayLen;
+    int8 op = 1;
+
+    if (reverse)
+    {
+        init = arrayLen - 1;
+        end = -1;
+        op = -1;
+    }
+
+    std::ostringstream ss;
+    for (int32 i = init; i != end; i += op)
+    {
+        char buffer[4];
+        sprintf(buffer, "%02X", bytes[i]);
+        ss << buffer;
+    }
+
+    return ss.str();
+}
+
+void HexStrToByteArray(std::string const& str, uint8* out, bool reverse /*= false*/)
+{
+    // string must have even number of characters
+    if (str.length() & 1)
+        return;
+
+    int32 init = 0;
+    int32 end = str.length();
+    int8 op = 1;
+
+    if (reverse)
+    {
+        init = str.length() - 2;
+        end = -2;
+        op = -1;
+    }
+
+    uint32 j = 0;
+    for (int32 i = init; i != end; i += 2 * op)
+    {
+        char buffer[3] = { str[i], str[i + 1], '\0' };
+        out[j++] = strtoul(buffer, NULL, 16);
+    }
 }

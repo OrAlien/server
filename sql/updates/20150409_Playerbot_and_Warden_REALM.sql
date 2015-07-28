@@ -10,7 +10,7 @@ BEGIN
     DECLARE bRollback BOOL  DEFAULT FALSE ;
     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET `bRollback` = TRUE;
 
-  SET @cOldRev = 'required_19000_01_20140607_Realm_Resync'; 
+  SET @cOldRev = 'required_20140607_Realm_Resync'; 
 
   -- Set the new revision string
   SET @cNewRev = 'required_20150409_Playerbot_and_Warden';
